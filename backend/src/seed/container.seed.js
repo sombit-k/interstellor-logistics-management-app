@@ -5,7 +5,7 @@ import { connectDb } from "../lib/db.js";
 config();
 
 const generateRandomContainer = () => {
-  const randomId = Math.random().toString(36).substring(2, 10);
+  const randomId = ["contA","contB","contC","ContD"][Math.floor(Math.random() * 4)];
   const randomZone = `Zone-${Math.floor(Math.random() * 10) + 1}`;
   const randomDimensions = {
     width: Math.floor(Math.random() * 100) + 1,
