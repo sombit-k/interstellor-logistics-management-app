@@ -1,11 +1,16 @@
-import express from "express"
+import express from "express";
+import {
+  identifyWaste,
+  returnPlan,
+  completeUndocking,
+  trackWaste,
+} from "../controllers/waste.controller.js";
 
-import {} from "../controllers/manage.controller.js"
-import {simulateDay} from "../controllers/simulation.controller.js"
-import {} from "../controllers/log.controller.js"
+const router = express.Router();
 
-const router = express.Router()
+router.get("/identify", identifyWaste);
+router.post("/return-plan", returnPlan);
+router.post("/complete-undocking", completeUndocking);
+router.post("/track", trackWaste);
 
-router.post("/identify",simulateDay)
-
-export default router
+export default router;
