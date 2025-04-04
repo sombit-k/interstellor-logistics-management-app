@@ -26,7 +26,9 @@ const wasteItemSchema = new mongoose.Schema({
         depth: { type: Number },
         height: { type: Number }
     }
-}
+},
+    mass: { type: Number, required: true }, // Add mass for weight calculations
+    markedForDisposal: { type: Boolean, default: false } // Track disposal status
 });
 
 const WasteItem=mongoose.model("WasteItem",wasteItemSchema)
