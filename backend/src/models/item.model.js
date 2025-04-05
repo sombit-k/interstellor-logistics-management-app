@@ -4,13 +4,11 @@ const itemSchema = new mongoose.Schema(
     {
         itemId: { 
             type: String, 
-            required: true, 
-            unique: true 
+            required: true,  
         },
         containerId: { 
             type: String,
             default: "null",
-            unique: true 
         },
         name: { 
             type: String, 
