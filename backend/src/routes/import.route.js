@@ -2,7 +2,7 @@ import express from 'express';
 
 import { importItems } from '../controllers/import.controller.js';
 
-router=express.Router();
+const router=express.Router();
 
 
 router.post('/items',importItems);

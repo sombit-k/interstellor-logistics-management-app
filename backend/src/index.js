@@ -3,7 +3,7 @@ import dotenv from "dotenv"
 import manageRoutes from "./routes/manage.route.js"
 import { connectDb } from "./lib/db.js"
 import wasteRoutes from "./routes/waste.route.js"
-
+import importRoutes from "./routes/import.route.js"
 dotenv.config()
 const app = express()
 app.use(express.json())
