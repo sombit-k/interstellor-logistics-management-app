@@ -28,12 +28,17 @@ export const simulateItemUsage = async (req, res) => {
             const remainingUses = parseInt(dbItem.usageLimit) - numOfDays;
             if (remainingUses <= 0) {
                 itemsDepletedToday.push({ itemId: dbItem.itemId, name: dbItem.name });
-                await WasteItem.create({
-                    itemId: dbItem.itemId,
-                    name: dbItem.name,
-                    reason: "Outof Uses",
-                    containerId: "Unknown", // Adjust as needed
-                    position: dbItem.position,
+                await trackWaste({
+                    body: {
+                        itemId: dbItem.itemId,
+                        name: dbItem.name,
+                        reason: "Outof Uses",
+                        containerId: "Unknown", // Adjust as needed
+                        position: dbItem.position,
+                        mass: dbItem.mass,
+                    },
+                }, {
+                    status: () => ({ json: () => {} }) // Mock response object
                 });
                 await dbItem.deleteOne();
             } else {
