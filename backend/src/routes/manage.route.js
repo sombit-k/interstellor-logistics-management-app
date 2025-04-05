@@ -6,11 +6,14 @@ import {logUsage,showLogs} from "../controllers/log.controller.js"
 
 const router = express.Router()
 
-router.post("/simulate/day",simulateDay)
+// router.post("/simulate/day",simulateDay)
+
 router.post("/simulate/items", simulateItemUsage)
 
 router.get("/logs",showLogs)
+
 router.post("/log/item",logUsage)
+
 router.post("/place", placeItem)
 
 export default router

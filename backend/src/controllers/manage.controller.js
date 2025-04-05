@@ -5,61 +5,63 @@ import Log from "../models/log.model.js";
 export const placeItem = async (req, res) => {
     const { itemId, userId, timestamp, containerId, position } = req.body;
 
-    try {
-        // Validate item existence
-        const item = await Item.findOne({ itemId });
-        if (!item) {
-            return res.status(404).json({ success: false, message: "Item not found" });
-        }
+    //add the logic here
+    
+    // try {
+    //     // Validate item existence
+    //     const item = await Item.findOne({ itemId });
+    //     if (!item) {
+    //         return res.status(404).json({ success: false, message: "Item not found" });
+    //     }
 
-        // Validate container existence
-        const container = await Container.findOne({ containerId });
-        if (!container) {
-            return res.status(404).json({ success: false, message: "Container not found" });
-        }
+    //     // Validate container existence
+    //     const container = await Container.findOne({ containerId });
+    //     if (!container) {
+    //         return res.status(404).json({ success: false, message: "Container not found" });
+    //     }
 
-        // Check if the item fits in the container
-        const { startCoordinates, endCoordinates } = position;
-        const itemWidth = endCoordinates.width - startCoordinates.width;
-        const itemDepth = endCoordinates.depth - startCoordinates.depth;
-        const itemHeight = endCoordinates.height - startCoordinates.height;
+    //     // Check if the item fits in the container
+    //     const { startCoordinates, endCoordinates } = position;
+    //     const itemWidth = endCoordinates.width - startCoordinates.width;
+    //     const itemDepth = endCoordinates.depth - startCoordinates.depth;
+    //     const itemHeight = endCoordinates.height - startCoordinates.height;
 
-        if (
-            itemWidth > container.width ||
-            itemDepth > container.depth ||
-            itemHeight > container.height
-        ) {
-            return res.status(400).json({ success: false, message: "Item does not fit in the container" });
-        }
+    //     if (
+    //         itemWidth > container.width ||
+    //         itemDepth > container.depth ||
+    //         itemHeight > container.height
+    //     ) {
+    //         return res.status(400).json({ success: false, message: "Item does not fit in the container" });
+    //     }
 
-        // Adjust position for high-priority items
-        if (item.priority > 80) { // High-priority items
-            position.startCoordinates.depth = 0; // Place closer to the front for easy access
-            position.endCoordinates.depth = itemDepth;
-        }
+    //     // Adjust position for high-priority items
+    //     if (item.priority > 80) { // High-priority items
+    //         position.startCoordinates.depth = 0; // Place closer to the front for easy access
+    //         position.endCoordinates.depth = itemDepth;
+    //     }
 
-        // Update item's position and container
-        item.containerId = containerId;
-        item.position = position;
-        await item.save();
+    //     // Update item's position and container
+    //     item.containerId = containerId;
+    //     item.position = position;
+    //     await item.save();
 
-        // Log the placement action
-        await Log.create({
-            timeStamp: timestamp,
-            userId,
-            actionType: "placement",
-            itemId,
-            details: {
-                toContainer: containerId,
-                position,
-            },
-        });
+    //     // Log the placement action
+    //     await Log.create({
+    //         timeStamp: timestamp,
+    //         userId,
+    //         actionType: "placement",
+    //         itemId,
+    //         details: {
+    //             toContainer: containerId,
+    //             position,
+    //         },
+    //     });
 
-        res.status(200).json({ success: true, message: "Item placed successfully" });
-    } catch (error) {
-        console.error("Error placing item:", error);
-        res.status(500).json({ success: false, message: "Failed to place item", error: error.message });
-    }
+    //     res.status(200).json({ success: true, message: "Item placed successfully" });
+    // } catch (error) {
+    //     console.error("Error placing item:", error);
+    //     res.status(500).json({ success: false, message: "Failed to place item", error: error.message });
+    // }
 };
 
 const placement = async (req, res) => {

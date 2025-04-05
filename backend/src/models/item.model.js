@@ -7,6 +7,11 @@ const itemSchema = new mongoose.Schema(
             required: true, 
             unique: true 
         },
+        containerId: { 
+            type: String,
+            default: "null",
+            unique: true 
+        },
         name: { 
             type: String, 
             required: true 
