@@ -1,41 +1,45 @@
 import { config } from "dotenv";
+import fs from "fs";
+import csvParser from "csv-parser";
 import Container from "../models/container.model.js";
 import { connectDb } from "../lib/db.js";
 
 config();
 
-const generateRandomContainer = () => {
-  const randomId = ["contA","contB","contC","ContD"][Math.floor(Math.random() * 4)];
-  const randomZone = `Zone-${Math.floor(Math.random() * 10) + 1}`;
-  const randomDimensions = {
-    width: Math.floor(Math.random() * 100) + 1,
-    depth: Math.floor(Math.random() * 100) + 1,
-    height: Math.floor(Math.random() * 100) + 1,
-  };
-
-  return {
-    containerId: randomId,
-    zone: randomZone,
-    ...randomDimensions,
-  };
-};
-
-const seedContainers = async (count) => {
+const seedContainersFromCSV = async (filePath) => {
   try {
-    console.log("Seeding containers...");
     await connectDb();
 
-    const containers = Array.from({ length: count }, generateRandomContainer);
-    await Container.insertMany(containers);
+    const containers = [];
 
-    console.log(`${count} containers have been seeded successfully.`);
+    // Read and parse the CSV file
+    fs.createReadStream(filePath)
+      .pipe(csvParser())
+      .on("data", (row) => {
+        // Map the CSV row to the database schema
+        const container = {
+          zone: row.zone,
+          containerId: row.container_id,
+          width: parseFloat(row.width_cm),
+          depth: parseFloat(row.depth_cm),
+          height: parseFloat(row.height_cm),
+        };
+        containers.push(container); // Add the mapped container to the containers array
+      })
+      .on("end", async () => {
+        // Insert parsed containers into the database
+        try {
+          await Container.insertMany(containers);
+          console.log(`${containers.length} containers have been seeded successfully.`);
+        } catch (dbError) {
+          console.error("Error inserting containers into the database:", dbError);
+        }
+      });
   } catch (error) {
-    console.error("Error seeding containers:", error);
+    console.error("Error seeding containers from CSV:", error);
   }
 };
 
-seedContainers(10);
-
-// To seed more containers, change the number in the function call above
-// To run this file, use the command:
-// node src/seed/container.seed.js
+// Provide the path to your CSV file
+const csvFilePath = "./src/seed/containers.csv"; // Update the path to match the location of containers.csv
+seedContainersFromCSV(csvFilePath);
