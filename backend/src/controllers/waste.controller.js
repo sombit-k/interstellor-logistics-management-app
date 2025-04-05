@@ -55,7 +55,7 @@ export const returnPlan = async (req, res) => {
         undockingContainerId,
         undockingDate,
         returnItems,
-        totalVolume: returnItems.length,
+        totalVolume: returnItems.length, 
         totalWeight,
       },
     });
