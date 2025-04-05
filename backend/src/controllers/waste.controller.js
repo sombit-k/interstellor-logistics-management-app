@@ -19,13 +19,17 @@ export const returnPlan = async (req, res) => {
     const items = await Item.find(); // Fetch all items from the Item model
 
     let totalWeight = 0;
+    let totalVolume = 0;
     const returnPlan = [];
     const retrievalSteps = [];
     const returnItems = [];
 
     items.forEach((item, index) => {
+      const itemVolume = item.dimensions.width * item.dimensions.depth * item.dimensions.height; // Calculate volume
+
       if (totalWeight + item.mass <= maxWeight) {
         totalWeight += item.mass;
+        totalVolume += itemVolume;
         returnPlan.push({
           step: index + 1,
           itemId: item.itemId,
@@ -55,7 +59,7 @@ export const returnPlan = async (req, res) => {
         undockingContainerId,
         undockingDate,
         returnItems,
-        totalVolume: returnItems.length, 
+        totalVolume, // Return calculated volume
         totalWeight,
       },
     });

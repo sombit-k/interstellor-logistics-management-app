@@ -69,11 +69,28 @@ export const placementRecommendations = async (req, res) => {
         const placements = [];
         const rearrangements = [];
 
-        items.forEach((item, index) => {
-            const container = containers.find(c => c.zone === item.preferredZone && 
-                c.width >= item.width && c.depth >= item.depth && c.height >= item.height);
+        // Sort items by priority (higher priority first) and volume (smaller volume first)
+        const sortedItems = items.sort((a, b) => {
+            if (b.priority === a.priority) {
+                const volumeA = a.width * a.depth * a.height;
+                const volumeB = b.width * b.depth * b.height;
+                return volumeA - volumeB; // Smaller volume first
+            }
+            return b.priority - a.priority; // Higher priority first
+        });
 
-            if (container) {
+        sortedItems.forEach((item, index) => {
+            // Find the best container that minimizes storage usage
+            const suitableContainer = containers
+                .filter(c => c.zone === item.preferredZone && 
+                    c.width >= item.width && c.depth >= item.depth && c.height >= item.height)
+                .sort((a, b) => {
+                    const volumeA = a.width * a.depth * a.height;
+                    const volumeB = b.width * b.depth * b.height;
+                    return volumeA - volumeB; // Smaller container volume first
+                })[0];
+
+            if (suitableContainer) {
                 const position = {
                     startCoordinates: { width: 0, depth: 0, height: 0 },
                     endCoordinates: { width: item.width, depth: item.depth, height: item.height }
@@ -81,7 +98,7 @@ export const placementRecommendations = async (req, res) => {
 
                 placements.push({
                     itemId: item.itemId,
-                    containerId: container.containerId,
+                    containerId: suitableContainer.containerId,
                     position
                 });
             } else {
@@ -152,16 +169,24 @@ export const retrieve = async (req, res) => {
         }
 
         const containerId = item.containerId;
+        const reason = "Item retrieved by user"; // Add a reason for the retrieval
+
+        // Update item state
         item.containerId = null;
         item.position = null;
         await item.save();
 
+        // Log the retrieval action
         await Log.create({
             timeStamp: timestamp,
             userId,
             actionType: "retrieval",
             itemId,
-            details: { fromContainer: containerId }
+            details: {
+                reason, // Add reason
+                fromContainer: containerId || "Unknown", // Ensure fromContainer is provided
+                toContainer: "N/A" // Retrieval does not involve a destination container
+            }
         });
 
         res.status(200).json({ success: true, message: "Item retrieved successfully" });
@@ -171,35 +196,6 @@ export const retrieve = async (req, res) => {
     }
 };
 
-export const place = async (req, res) => {
-    const { itemId, userId, timestamp, containerId, position } = req.body;
-
-    try {
-        const item = await Item.findOne({ itemId });
-        const container = await Container.findOne({ containerId });
-
-        if (!item || !container) {
-            return res.status(404).json({ success: false, message: "Item or container not found" });
-        }
-
-        item.containerId = containerId;
-        item.position = position;
-        await item.save();
-
-        await Log.create({
-            timeStamp: timestamp,
-            userId,
-            actionType: "placement",
-            itemId,
-            details: { toContainer: containerId, position }
-        });
-
-        res.status(200).json({ success: true, message: "Item placed successfully" });
-    } catch (error) {
-        console.error("Error placing item:", error);
-        res.status(500).json({ success: false, message: "Failed to place item", error: error.message });
-    }
-};
 
 const placement = async (req, res) => {
     const { containerId } = req.body;
