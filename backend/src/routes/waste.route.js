@@ -9,8 +9,11 @@ import {
 const router = express.Router();
 
 router.get("/identify", identifyWaste);
+
 router.post("/return-plan", returnPlan);
+
 router.post("/complete-undocking", completeUndocking);
+
 router.post("/track", trackWaste);
 
 export default router;

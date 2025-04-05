@@ -46,7 +46,6 @@ export const returnPlan = async (req, res) => {
         });
       }
     });
-
     res.status(200).json({
       success: true,
       returnPlan,
@@ -55,7 +54,7 @@ export const returnPlan = async (req, res) => {
         undockingContainerId,
         undockingDate,
         returnItems,
-        totalVolume: returnItems.length,
+        totalVolume: returnItems.length,//array lenght  volume+=volume of individual items
         totalWeight,
       },
     });
@@ -76,6 +75,7 @@ export const completeUndocking = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 export const trackWaste = async (req, res) => {
   try {

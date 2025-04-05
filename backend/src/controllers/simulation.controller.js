@@ -2,18 +2,17 @@ import Container from "../models/container.model.js"
 import Item from "../models/item.model.js"
 import Log from "../models/log.model.js"
 import WasteItem from "../models/waste.model.js"
+import { trackWaste } from "./waste.controller.js"
 
-export const simulateDay = (req, res) => {
-    // Function implementation for simulateDay
-};
 
 export const simulateItemUsage = async (req, res) => {
     const { numOfDays, toTimestamp, itemsToBeUsedPerDay } = req.body;
 
     try {
         // Determine the simulation end date
-        const startDate = new Date();
+        const startDate = new Date(); 
         const endDate = toTimestamp ? new Date(toTimestamp) : new Date(startDate.getTime() + numOfDays * 24 * 60 * 60 * 1000);
+
 
         const itemsUsed = [];
         const itemsExpired = [];
@@ -25,39 +24,46 @@ export const simulateItemUsage = async (req, res) => {
             if (!dbItem) continue;
 
             // Simulate usage
-            const remainingUses = parseInt(dbItem.usageLimit) - numOfDays;
+
+            const remainingUses = parseInt(dbItem.usageLimit) - numOfDays; 
+
+            
             if (remainingUses <= 0) {
                 itemsDepletedToday.push({ itemId: dbItem.itemId, name: dbItem.name });
                 await trackWaste({
                     body: {
                         itemId: dbItem.itemId,
                         name: dbItem.name,
-                        reason: "Outof Uses",
-                        containerId: "Unknown", // Adjust as needed
+                        reason: "Out of Uses",
+                        containerId: "Unknown", 
                         position: dbItem.position,
                         mass: dbItem.mass,
                     },
                 }, {
-                    status: () => ({ json: () => {} }) // Mock response object
+                    status: () => ({ json: () => {} }) 
                 });
                 await dbItem.deleteOne();
             } else {
                 itemsUsed.push({ itemId: dbItem.itemId, name: dbItem.name, remainingUses });
-                dbItem.usageLimit = `${remainingUses} uses`;
+                dbItem.usageLimit = `${remainingUses}`;
                 await dbItem.save();
             }
 
             // Check for expiry
             if (new Date(dbItem.expiryDate) <= endDate) {
                 itemsExpired.push({ itemId: dbItem.itemId, name: dbItem.name });
-                await WasteItem.create({
-                    itemId: dbItem.itemId,
-                    name: dbItem.name,
-                    reason: "Expired",
-                    containerId: "Unknown", // Adjust as needed
-                    position: dbItem.position,
+                await trackWaste({
+                    body: {
+                        itemId: dbItem.itemId,
+                        name: dbItem.name,
+                        reason: "Expired",
+                        containerId: "Unknown", 
+                        position: dbItem.position,
+                        mass: dbItem.mass,
+                    },
+                }, {
+                    status: () => ({ json: () => {} }) 
                 });
-                await dbItem.deleteOne();
             }
         }
 
