@@ -30,6 +30,7 @@ const seedItemsFromCSV = async (filePath) => {
           expiryDate: row.expiry_date === "N/A" ? "N/A" : row.expiry_date,
           usageLimit: row.usage_limit,
           preferredZone: row.preferred_zone,
+          containerId:"null",
           position: {
             startCoordinates: {
               width: null,
@@ -47,7 +48,6 @@ const seedItemsFromCSV = async (filePath) => {
       })
       .on("end", async () => {
         // Insert parsed items into the database
-        console.log(items.slice(0, 20))
         try {
           await Item.insertMany(items);
           console.log(`${items.length} items have been seeded successfully.`);

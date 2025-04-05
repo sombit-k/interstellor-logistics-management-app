@@ -12,8 +12,12 @@ app.use(express.json())
 const PORT=process.env.PORT
 
 app.use("/api", manageRoutes);
+
+
 app.use("/api/import", importRoutes);
+
 app.use("/api/waste", wasteRoutes);
+
 app.use("/api/fetch", fetchRoutes);
 
 app.listen(PORT, () => {

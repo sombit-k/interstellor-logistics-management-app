@@ -8,7 +8,7 @@ const wasteItemSchema = new mongoose.Schema({
      required: true 
     },
     reason: { type: String, 
-    enum: ['Expired', 'Outof Uses'], 
+    enum: ['Expired', 'Out of Uses'], 
     required: true 
     },
     containerId: { 

@@ -50,7 +50,6 @@ export const returnPlan = async (req, res) => {
         });
       }
     });
-
     res.status(200).json({
       success: true,
       returnPlan,
@@ -80,6 +79,7 @@ export const completeUndocking = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 export const trackWaste = async (req, res) => {
   try {
