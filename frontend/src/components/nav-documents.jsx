@@ -1,6 +1,7 @@
-"use client"
+"use client";
 
-import { IconDots, IconFolder, IconShare3, IconTrash } from "@tabler/icons-react";
+import React, { useRef } from "react";
+import { IconDots, IconFolder, IconDownload } from "@tabler/icons-react";
 
 import {
   DropdownMenu,
@@ -8,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -17,18 +18,30 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
-export function NavDocuments({
-  items
-}) {
-  const { isMobile } = useSidebar()
+export function NavDocuments({ items }) {
+  const { isMobile } = useSidebar();
+  const fileInputRef = useRef(null);
+
+  const handleImportClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click(); // Programmatically trigger the file input
+    }
+  };
+
+  const handleFileChange = event => {
+    const file = event.target.files[0];
+    if (file) {
+      console.log("File selected:", file.name); // Handle the selected file
+    }
+  };
 
   return (
-    (<SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Documents</SidebarGroupLabel>
+    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+      <SidebarGroupLabel>manage</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
+        {items.map(item => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
               <a href={item.url}>
@@ -38,7 +51,10 @@ export function NavDocuments({
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuAction showOnHover className="data-[state=open]:bg-accent rounded-sm">
+                <SidebarMenuAction
+                  showOnHover
+                  className="data-[state=open]:bg-accent rounded-sm"
+                >
                   <IconDots />
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
@@ -46,20 +62,29 @@ export function NavDocuments({
               <DropdownMenuContent
                 className="w-24 rounded-lg"
                 side={isMobile ? "bottom" : "right"}
-                align={isMobile ? "end" : "start"}>
-                <DropdownMenuItem>
+                align={isMobile ? "end" : "start"}
+              >
+                <DropdownMenuItem onClick={handleImportClick}>
                   <IconFolder />
-                  <span>Open</span>
+                  <span>items </span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <IconShare3 />
-                  <span>Share</span>
-                </DropdownMenuItem>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
-                  <IconTrash />
-                  <span>Delete</span>
+                <DropdownMenuItem onClick={handleImportClick}>
+                  <IconFolder />
+                  <span>containers </span>
                 </DropdownMenuItem>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
@@ -71,6 +96,6 @@ export function NavDocuments({
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
-    </SidebarGroup>)
+    </SidebarGroup>
   );
 }
