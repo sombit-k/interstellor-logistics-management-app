@@ -10,7 +10,7 @@ const useItemStore = create((set) => ({
   fetchItems: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.get("/api/items");
+      const response = await axios.get("/api/fetch/items");
       set({ items: response.data.items, loading: false });
     } catch (error) {
       set({ error: error.message, loading: false });
