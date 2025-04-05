@@ -47,6 +47,7 @@ const seedItemsFromCSV = async (filePath) => {
       })
       .on("end", async () => {
         // Insert parsed items into the database
+        console.log(items.slice(0, 20))
         try {
           await Item.insertMany(items);
           console.log(`${items.length} items have been seeded successfully.`);
