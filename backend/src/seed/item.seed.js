@@ -1,65 +1,65 @@
 import { config } from "dotenv";
+import fs from "fs";
+import csvParser from "csv-parser";
 import Item from "../models/item.model.js";
-import {connectDb} from "../lib/db.js"; 
+import { connectDb } from "../lib/db.js";
 
 config();
 
-const generateRandomItem = () => {
-  const randomId = Math.random().toString(36).substring(2, 10);
-  const randomName = `Item-${randomId}`;
-  const randomDimensions = {
-    width: Math.floor(Math.random() * 100) + 1,
-    depth: Math.floor(Math.random() * 100) + 1,
-    height: Math.floor(Math.random() * 100) + 1,
-  };
-  const randomMass = Math.floor(Math.random() * 1000) + 1;
-  const randomPriority = Math.floor(Math.random() * 100) + 1;
-  const randomExpiryDate = new Date(
-    Date.now() + Math.floor(Math.random() * 10000000000)
-  ).toISOString();
-  const randomUsageLimit = `${Math.floor(Math.random() * 100) + 1} uses`;
-  const randomPreferredZone = `Zone-${Math.floor(Math.random() * 10) + 1}`;
-
-  return {
-    itemId: randomId,
-    name: randomName,
-    dimensions: randomDimensions,
-    mass: randomMass,
-    priority: randomPriority,
-    expiryDate: randomExpiryDate,
-    usageLimit: randomUsageLimit,
-    preferredZone: randomPreferredZone,
-    position: {
-      startCoordinates: {
-        width: 0,
-        depth: 0,
-        height: 0,
-      },
-      endCoordinates: {
-        width: 0,
-        depth: 0,
-        height: 0,
-      },
-    },
-  };
-};
-
-const seedItems = async (count) => {
+const seedItemsFromCSV = async (filePath) => {
   try {
-    await connectDb(); 
+    await connectDb();
 
-    const items = Array.from({ length: count }, generateRandomItem);
-    await Item.insertMany(items);
+    const items = [];
 
-    console.log(`${count} items have been seeded successfully.`);
+    // Read and parse the CSV file
+    fs.createReadStream(filePath)
+      .pipe(csvParser())
+      .on("data", (row) => {
+        // Map the CSV row to the database schema
+        const item = {
+          itemId: row.item_id,
+          name: row.name,
+          dimensions: {
+            width: parseFloat(row.width_cm),
+            depth: parseFloat(row.depth_cm),
+            height: parseFloat(row.height_cm),
+          },
+          mass: parseFloat(row.mass_kg),
+          priority: parseInt(row.priority, 10),
+          expiryDate: row.expiry_date === "N/A" ? "N/A" : row.expiry_date,
+          usageLimit: row.usage_limit,
+          preferredZone: row.preferred_zone,
+          position: {
+            startCoordinates: {
+              width: null,
+              depth: null,
+              height: null,
+            },
+            endCoordinates: {
+              width: null,
+              depth: null,
+              height: null,
+            },
+          },
+        };
+        items.push(item); // Add the mapped item to the items array
+      })
+      .on("end", async () => {
+        // Insert parsed items into the database
+        try {
+          await Item.insertMany(items);
+          console.log(`${items.length} items have been seeded successfully.`);
+        } catch (dbError) {
+          console.error("Error inserting items into the database:", dbError);
+        }
+      });
   } catch (error) {
-    console.error("Error seeding items:", error);
+    console.error("Error seeding items from CSV:", error);
   }
 };
 
-seedItems(20);
+// Provide the path to your CSV file
+const csvFilePath = "./src/seed/input_items.csv"; // Update the path to match the location of input_items.csv
+seedItemsFromCSV(csvFilePath);
 
-
-//to seed more items, change the number in the function call above
-// To run this file, use the command:
-//node src/seed/item.seed.js 
