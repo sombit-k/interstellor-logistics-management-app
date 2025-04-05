@@ -5,105 +5,118 @@ import Log from "../models/log.model.js";
 export const placeItem = async (req, res) => {
     const { itemId, userId, timestamp, containerId, position } = req.body;
 
+};
+
+export const placementRecommendations = async (req, res) => {
+    const { items, containers } = req.body;
+
     try {
-        // Validate item existence
-        const item = await Item.findOne({ itemId });
-        if (!item) {
-            return res.status(404).json({ success: false, message: "Item not found" });
-        }
+        const placements = [];
+        const rearrangements = [];
 
-        // Validate container existence
-        const container = await Container.findOne({ containerId });
-        if (!container) {
-            return res.status(404).json({ success: false, message: "Container not found" });
-        }
-
-        // Check if the item fits in the container
-        const { startCoordinates, endCoordinates } = position;
-        const itemWidth = endCoordinates.width - startCoordinates.width;
-        const itemDepth = endCoordinates.depth - startCoordinates.depth;
-        const itemHeight = endCoordinates.height - startCoordinates.height;
-
-        if (
-            itemWidth > container.width ||
-            itemDepth > container.depth ||
-            itemHeight > container.height
-        ) {
-            return res.status(400).json({ success: false, message: "Item does not fit in the container" });
-        }
-
-        // Adjust position for high-priority items
-        if (item.priority > 80) { // High-priority items
-            position.startCoordinates.depth = 0; // Place closer to the front for easy access
-            position.endCoordinates.depth = itemDepth;
-        }
-
-        // Update item's position and container
-        item.containerId = containerId;
-        item.position = position;
-        await item.save();
-
-        // Log the placement action
-        await Log.create({
-            timeStamp: timestamp,
-            userId,
-            actionType: "placement",
-            itemId,
-            details: {
-                toContainer: containerId,
-                position,
-            },
+        // Sort items by priority (higher priority first) and volume (smaller volume first)
+        const sortedItems = items.sort((a, b) => {
+            if (b.priority === a.priority) {
+                const volumeA = a.width * a.depth * a.height;
+                const volumeB = b.width * b.depth * b.height;
+                return volumeA - volumeB; // Smaller volume first
+            }
+            return b.priority - a.priority; // Higher priority first
         });
 
-        res.status(200).json({ success: true, message: "Item placed successfully" });
+        sortedItems.forEach((item, index) => {
+            // Find the best container that minimizes storage usage
+            const suitableContainer = containers
+                .filter(c => c.zone === item.preferredZone && 
+                    c.width >= item.width && c.depth >= item.depth && c.height >= item.height)
+                .sort((a, b) => {
+                    const volumeA = a.width * a.depth * a.height;
+                    const volumeB = b.width * b.depth * b.height;
+                    return volumeA - volumeB; // Smaller container volume first
+                })[0];
+
+            if (suitableContainer) {
+                const position = {
+                    startCoordinates: { width: 0, depth: 0, height: 0 },
+                    endCoordinates: { width: item.width, depth: item.depth, height: item.height }
+                };
+
+                placements.push({
+                    itemId: item.itemId,
+                    containerId: suitableContainer.containerId,
+                    position
+                });
+            } else {
+                rearrangements.push({
+                    step: index + 1,
+                    action: "remove",
+                    itemId: item.itemId,
+                    fromContainer: "N/A",
+                    fromPosition: null,
+                    toContainer: "N/A",
+                    toPosition: null
+                });
+            }
+        });
+
+        res.status(200).json({ success: true, placements, rearrangements });
     } catch (error) {
-        console.error("Error placing item:", error);
-        res.status(500).json({ success: false, message: "Failed to place item", error: error.message });
+        console.error("Error generating placement recommendations:", error);
+        res.status(500).json({ success: false, message: "Failed to generate placement recommendations", error: error.message });
     }
 };
 
-const placement = async (req, res) => {
-    const { containerId } = req.body;
+export const search = async (req, res) => {
+    const { itemId, itemName } = req.query;
 
     try {
-        // Fetch all items in the specified container
-        const items = await Item.find({ containerId });
-        res.status(200).json({ success: true, items });
-    } catch (error) {
-        console.error("Error fetching placement data:", error);
-        res.status(500).json({ success: false, message: "Failed to fetch placement data", error: error.message });
-    }
-};
+        const query = itemId ? { itemId } : { name: itemName };
+        const item = await Item.findOne(query);
 
-const search = async (req, res) => {
-    const { itemId } = req.query;
-
-    try {
-        // Find the item by ID
-        const item = await Item.findOne({ itemId });
         if (!item) {
-            return res.status(404).json({ success: false, message: "Item not found" });
+            return res.status(404).json({ success: false, found: false, message: "Item not found" });
         }
 
-        res.status(200).json({ success: true, item });
+        const retrievalSteps = [
+            {
+                step: 1,
+                action: "retrieve",
+                itemId: item.itemId,
+                itemName: item.name
+            }
+        ];
+
+        res.status(200).json({
+            success: true,
+            found: true,
+            item: {
+                itemId: item.itemId,
+                name: item.name,
+                containerId: item.containerId,
+                zone: item.preferredZone,
+                position: item.position
+            },
+            retrievalSteps
+        });
     } catch (error) {
         console.error("Error searching for item:", error);
         res.status(500).json({ success: false, message: "Failed to search for item", error: error.message });
     }
 };
 
-const retrieve = async (req, res) => {
+export const retrieve = async (req, res) => {
     const { itemId, userId, timestamp } = req.body;
 
     try {
-        // Find the item by ID
         const item = await Item.findOne({ itemId });
         if (!item) {
             return res.status(404).json({ success: false, message: "Item not found" });
         }
 
-        // Remove the item from its container
         const containerId = item.containerId;
+        const reason = "Item retrieved by user"; // Add a reason for the retrieval
+
+        // Update item state
         item.containerId = null;
         item.position = null;
         await item.save();
@@ -115,8 +128,10 @@ const retrieve = async (req, res) => {
             actionType: "retrieval",
             itemId,
             details: {
-                fromContainer: containerId,
-            },
+                reason, // Add reason
+                fromContainer: containerId || "Unknown", // Ensure fromContainer is provided
+                toContainer: "N/A" // Retrieval does not involve a destination container
+            }
         });
 
         res.status(200).json({ success: true, message: "Item retrieved successfully" });
@@ -126,27 +141,17 @@ const retrieve = async (req, res) => {
     }
 };
 
-const place = async (req, res) => {
-    const { itemId, containerId, position } = req.body;
+
+const placement = async (req, res) => {
+    const { containerId } = req.body;
 
     try {
-        // Find the item and container
-        const item = await Item.findOne({ itemId });
-        const container = await Container.findOne({ containerId });
-
-        if (!item || !container) {
-            return res.status(404).json({ success: false, message: "Item or container not found" });
-        }
-
-        // Update item's position and container
-        item.containerId = containerId;
-        item.position = position;
-        await item.save();
-
-        res.status(200).json({ success: true, message: "Item placed successfully" });
+        // Fetch all items in the specified container
+        const items = await Item.find({ containerId });
+        res.status(200).json({ success: true, items });
     } catch (error) {
-        console.error("Error placing item:", error);
-        res.status(500).json({ success: false, message: "Failed to place item", error: error.message });
+        console.error("Error fetching placement data:", error);
+        res.status(500).json({ success: false, message: "Failed to fetch placement data", error: error.message });
     }
 };
 
