@@ -1,18 +1,39 @@
 
-
+import mongoose from "mongoose";
+import Item from "../models/item.model.js";
 
 export const  importItems=  async (req, res) => {
     const { items } = req.body;
-
-    if (!items || !Array.isArray(items)) {
-        return res.status(400).json({ success: false, message: "Invalid items data" });
-    }
-
+    let rowNumber=0;
     try {
-        const importedItems = await Item.insertMany(items);
-        res.status(201).json({ success: true, importedItems });
+        for(let item in items){
+            const { itemId, name, dimensions, mass, priority, expiryDate, usageLimit, preferredZone } = item;
+            const newItem = new Item({
+                itemId,
+                name,
+                dimensions,
+                mass,
+                priority,
+                expiryDate,
+                usageLimit,
+                preferredZone,
+                position: {
+                    startCoordinates: {
+                        width: null,
+                        depth: null,
+                        height: null
+                    },
+                    endCoordinates: {
+                        width: null,
+                        depth: null,
+                        height: null
+                    }
+                }
+            });
+            await newItem.save();
+        }
     } catch (error) {
         console.error("Error importing items:", error);
-        res.status(500).json({ success: false, message: "Error importing items" });
+        return res.status(500).json({ message: "Error importing items", error });
     }
 }
