@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import axios from "axios";
+import {axiosInstance} from "../lib/axios.js";
 
 const useWasteStore = create((set) => ({
   wasteItems: [],
@@ -10,7 +10,7 @@ const useWasteStore = create((set) => ({
   fetchWasteItems: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.get("/api/waste");
+      const response = await axiosInstance.get("/api/waste");
       set({ wasteItems: response.data.wasteItems, loading: false });
     } catch (error) {
       set({ error: error.message, loading: false });
@@ -21,7 +21,7 @@ const useWasteStore = create((set) => ({
   addWasteItem: async (newWasteItem) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.post("/api/waste", newWasteItem);
+      const response = await axiosInstance.post("/api/waste", newWasteItem);
       set((state) => ({
         wasteItems: [...state.wasteItems, response.data.wasteItem],
         loading: false,
@@ -35,7 +35,7 @@ const useWasteStore = create((set) => ({
   updateWasteItem: async (wasteId, updatedData) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.put(`/api/waste/${wasteId}`, updatedData);
+      const response = await axiosInstance.put(`/api/waste/${wasteId}`, updatedData);
       set((state) => ({
         wasteItems: state.wasteItems.map((item) =>
           item.id === wasteId ? response.data.wasteItem : item
@@ -51,7 +51,7 @@ const useWasteStore = create((set) => ({
   deleteWasteItem: async (wasteId) => {
     set({ loading: true, error: null });
     try {
-      await axios.delete(`/api/waste/${wasteId}`);
+      await axiosInstance.delete(`/api/waste/${wasteId}`);
       set((state) => ({
         wasteItems: state.wasteItems.filter((item) => item.id !== wasteId),
         loading: false,

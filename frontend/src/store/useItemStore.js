@@ -1,5 +1,7 @@
 import { create } from "zustand";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios"; 
+import simulate from "@/components/ui/Simulate";
+
 
 const useItemStore = create((set,get) => ({
   items: [],
@@ -10,7 +12,7 @@ const useItemStore = create((set,get) => ({
   fetchItems: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.get("/api/fetch/items");
+      const response = await axiosInstance.get("/api/fetch/items");
       set({ items: response.data.items, loading: false });
     } catch (error) {
       set({ error: error.message, loading: false });
@@ -26,7 +28,7 @@ const useItemStore = create((set,get) => ({
     set({ loading: true, error: null });
     try {
       //import items from csv file
-      const response = await axios.post("/api/import/items", newItems);
+      const response = await axiosInstance.post("/api/import/items", newItems);
       await get().fetchItems();
     } catch (error) {
       set({ error: error.message, loading: false });
@@ -38,19 +40,64 @@ const useItemStore = create((set,get) => ({
 
 
 
-  // Delete an item
-  deleteItem: async (itemId) => {
+  simulateItem: async (itemData) => {
+
+    // item data = numOfDays, toTimestamp, itemsToBeUsedPerDay 
     set({ loading: true, error: null });
     try {
-      await axios.delete(`/api/items/${itemId}`);
-      set((state) => ({
-        items: state.items.filter((item) => item.itemId !== itemId),
-        loading: false,
-      }));
+      await axiosInstance.post(`/simulate/items/`,itemData);
+      await get().fetchItems();
     } catch (error) {
       set({ error: error.message, loading: false });
     }
+    finally {
+      set({ loading: false });
+    } 
   },
+
+
+
+  placementRecommendations: async (data) => {
+    set({ loading: true, error: null });
+    try {
+      // data=  items, containers
+      const response = await axiosInstance.post("/placement", data);
+      get().fetchItems();
+    } catch (error) {
+      set({ error: error.message, loading: false });
+    }
+    finally {
+      set({ loading: false });
+    }
+  },
+
+  search: async (query) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosInstance.get(`/search?query=${query}`);
+      set({ items: response.data.items, loading: false });
+    } catch (error) {
+      set({ error: error.message, loading: false });
+    }
+    finally {
+      set({ loading: false });
+    }
+  },
+  
+  retrieve: async (itemId) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axiosInstance.post("/retrieve", { itemId });
+      get().fetchItems();
+    } catch (error) {
+      set({ error: error.message, loading: false });
+    }
+    finally {
+      set({ loading: false });
+    }
+  },
+
+
 }));
 
 export default useItemStore;

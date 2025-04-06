@@ -16,7 +16,9 @@ router.post("/log/item",logUsage)
 router.post("/place", placeItem)
 
 router.post("/placement", placementRecommendations);
+
 router.get("/search", search);
+
 router.post("/retrieve", retrieve);
 
 

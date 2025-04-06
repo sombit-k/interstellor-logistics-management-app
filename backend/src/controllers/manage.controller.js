@@ -2,10 +2,7 @@ import Container from "../models/container.model.js";
 import Item from "../models/item.model.js";
 import Log from "../models/log.model.js";
 
-export const placeItem = async (req, res) => {
-    const { itemId, userId, timestamp, containerId, position } = req.body;
 
-};
 
 export const placementRecommendations = async (req, res) => {
     const { items, containers } = req.body;
