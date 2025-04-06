@@ -5,6 +5,7 @@ import { Parser } from "json2csv"; // For converting JSON to CSV
 
 const useItemStore = create((set, get) => ({
   searchedItem: [],
+  allItems: [],
   loading: false,
   error: null,
 
@@ -12,8 +13,8 @@ const useItemStore = create((set, get) => ({
   fetchItems: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await axiosInstance.get("/api/fetch/items");
-      set({ items: response.data.items, loading: false });
+      const response = await axiosInstance.get("/fetch/items");
+      set({ allItems: response.data.items, loading: false });
     } catch (error) {
       set({ error: error.message, loading: false });
     } finally {
