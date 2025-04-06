@@ -4,7 +4,7 @@ import simulate from "@/components/ui/Simulate";
 
 
 const useItemStore = create((set,get) => ({
-  items: [],
+  searchedItem: [],
   loading: false,
   error: null,
 
@@ -74,8 +74,13 @@ const useItemStore = create((set,get) => ({
   search: async (query) => {
     set({ loading: true, error: null });
     try {
+      query = {
+        itemId: query.itemId || null,
+        itemName: query.itemName || null,
+      };
       const response = await axiosInstance.get(`/search?query=${query}`);
-      set({ items: response.data.items, loading: false });
+      set({ searchedItem: response.data.items, loading: false });
+      get().fetchItems();
     } catch (error) {
       set({ error: error.message, loading: false });
     }

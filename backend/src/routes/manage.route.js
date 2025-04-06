@@ -13,7 +13,7 @@ router.get("/logs",showLogs)
 
 router.post("/log/item",logUsage)
 
-router.post("/place", placeItem)
+router.post("/place", placeItem)//need to be defined
 
 router.post("/placement", placementRecommendations);
 
