@@ -5,7 +5,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import img from "../src/assets/astronat.jpg";
+// import img from "../src/assets/astronat.jpg";
 // import logo from "../src/assets/logo.svg";
 function Homepage() {
   return (
