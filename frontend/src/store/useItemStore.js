@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import axios from "axios";
 
-const useItemStore = create((set) => ({
+const useItemStore = create((set,get) => ({
   items: [],
   loading: false,
   error: null,
@@ -15,37 +15,28 @@ const useItemStore = create((set) => ({
     } catch (error) {
       set({ error: error.message, loading: false });
     }
+    finally {
+      set({ loading: false });
+    }
+
   },
 
   // Add a new item
-  addItem: async (newItem) => {
+  importItem: async (newItems) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.post("/api/items", newItem);
-      set((state) => ({
-        items: [...state.items, response.data.item],
-        loading: false,
-      }));
+      //import items from csv file
+      const response = await axios.post("/api/import/items", newItems);
+      await get().fetchItems();
     } catch (error) {
       set({ error: error.message, loading: false });
+    }
+    finally {
+      set({ loading: false });
     }
   },
 
-  // Update an existing item
-  updateItem: async (itemId, updatedData) => {
-    set({ loading: true, error: null });
-    try {
-      const response = await axios.put(`/api/items/${itemId}`, updatedData);
-      set((state) => ({
-        items: state.items.map((item) =>
-          item.itemId === itemId ? response.data.item : item
-        ),
-        loading: false,
-      }));
-    } catch (error) {
-      set({ error: error.message, loading: false });
-    }
-  },
+
 
   // Delete an item
   deleteItem: async (itemId) => {
